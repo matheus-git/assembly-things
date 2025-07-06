@@ -14,7 +14,7 @@ buffer:
 
 .global hello 
 hello:
-	mov rdi, 0
+	mov rdi, 1
     	lea rsi, [rip + msg] 
     	mov rdx, len
 	mov rax, 1
@@ -76,3 +76,34 @@ done:
 .local exit
 exit:
 	ret
+
+.global write_mmap
+write_mmap:
+    mov r14, rdi
+    
+    mov rax, 9            
+    mov rdi, 0         
+    mov rsi, 4096         
+    mov rdx, 3            
+    mov r10, 0x22      
+    mov r8, -1            
+    xor r9, r9            
+    syscall
+
+    cmp rax, -4095        
+    jae exit              
+
+    mov r12, rax          
+    mov r13, r12
+
+
+.copy_loop:
+    movb al, byte ptr [r14]        
+    movb byte ptr [r12], al        
+    inc r14               
+    inc r12               
+    test al, al           
+    jnz .copy_loop        
+
+    mov rax, r13          
+    ret

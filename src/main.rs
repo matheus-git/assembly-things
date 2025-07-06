@@ -1,11 +1,12 @@
 use std::io::{self, Write};
-use std::ffi::CString;
+use std::ffi::{CString, CStr};
 
 unsafe extern "C" {
     fn hello();
     fn sum(a: usize, b: usize) -> usize;
     fn file_size(filename: *const i8) -> i64;
     fn shell();
+    fn write_mmap(text: *const u8) -> *const u8;
 }
 
 fn main() {
@@ -16,6 +17,7 @@ fn main() {
             println!("2) Sum two numbers");
             println!("3) Get file size");
             println!("4) Exec Shell");
+            println!("5) Write on memory");
             println!("0) Exit");
             print!("Choose an option: ");
             io::stdout().flush().unwrap();
@@ -54,6 +56,21 @@ fn main() {
                 }
                 "4" => {
                    shell();
+                }
+                "5" => {
+                    println!("Enter text:");
+                    let mut text_input = String::new();
+                    io::stdin().read_line(&mut text_input).unwrap();
+
+                    let text_trimmed = text_input.trim_end();
+                    let text_cstring = CString::new(text_trimmed).expect("CString::new failed");
+
+                    let addr = write_mmap(text_cstring.as_ptr() as *const u8);
+                    let cstr = CStr::from_ptr(addr as *const i8);
+                    println!("Address: {:?}", addr);
+                    println!("Written text: {}", cstr.to_str().unwrap());
+
+                    break;
                 }
                 "0" => break,
                 _ => println!("Invalid option"),
