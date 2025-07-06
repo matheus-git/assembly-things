@@ -2,7 +2,7 @@ use std::io::{self, Write};
 use std::ffi::CString;
 
 unsafe extern "C" {
-    fn hello() -> *const u8;
+    fn hello();
     fn sum(a: usize, b: usize) -> usize;
     fn file_size(filename: *const i8) -> i64;
     fn shell();
@@ -26,10 +26,7 @@ fn main() {
 
             match choice {
                 "1" => {
-                    let ptr = hello();
-                    let slice = std::slice::from_raw_parts(ptr, 13);
-                    let msg = std::str::from_utf8(slice).unwrap();
-                    println!("{}", msg);
+                    hello();
                 }
                 "2" => {
                     println!("Enter two numbers:");

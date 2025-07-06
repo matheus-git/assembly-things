@@ -14,8 +14,11 @@ buffer:
 
 .global hello 
 hello:
-    	lea rax, [rip + msg] 
+	mov rdi, 0
+    	lea rsi, [rip + msg] 
     	mov rdx, len
+	mov rax, 1
+	syscall
     	ret
 
 .global sum
