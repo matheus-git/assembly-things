@@ -8,6 +8,8 @@ unsafe extern "C" {
     fn shell();
     fn write_mmap(text: *const u8) -> *const u8;
     fn write_file_mmap(filename: *const i8) -> *const u8;
+    fn fork() -> usize;
+    fn pid() -> usize;
 }
 
 fn main() {
@@ -20,6 +22,7 @@ fn main() {
             println!("4) Exec Shell");
             println!("5) Write on memory");
             println!("6) Map file to memory and edit");
+            println!("7) Fork current process");
             println!("0) Exit");
             print!("Choose an option: ");
             io::stdout().flush().unwrap();
@@ -100,6 +103,17 @@ fn main() {
                     let cstr = CStr::from_ptr(file_ptr as *const i8);
                     println!("Address: {:?}", file_ptr);
                     println!("File: \n{}", cstr.to_str().unwrap());
+                }
+                "7" => {
+                    let fork_result = fork();
+                    let this_pid = pid();
+
+                    if fork_result == 0 {
+                        std::process::exit(0);
+                    }
+
+                    println!("Parent PID (this process): {}", this_pid);
+                    println!("Child PID (from fork): {}", fork_result);
                 }
                 "0" => break,
                 _ => println!("Invalid option"),

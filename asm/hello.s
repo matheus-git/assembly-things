@@ -152,4 +152,18 @@ write_file_mmap:
 
 	ret
 
+.global fork
+fork:
+	mov rax, 57
+	syscall
+
+	ret
+
+.global pid
+pid:
+	mov rax, 39
+	syscall
+
+	ret
+
 
