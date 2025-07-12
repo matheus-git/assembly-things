@@ -79,31 +79,77 @@ exit:
 
 .global write_mmap
 write_mmap:
-    mov r14, rdi
-    
-    mov rax, 9            
-    mov rdi, 0         
-    mov rsi, 4096         
-    mov rdx, 3            
-    mov r10, 0x22      
-    mov r8, -1            
-    xor r9, r9            
-    syscall
+	mov r14, rdi
 
-    cmp rax, -4095        
-    jae exit              
+	mov rax, 9            
+	mov rdi, 0         
+	mov rsi, 4096         
+	mov rdx, 3            
+	mov r10, 0x22      
+	mov r8, -1            
+	xor r9, r9            
+	syscall
 
-    mov r12, rax          
-    mov r13, r12
+	cmp rax, -4095        
+	jae exit              
 
+	mov r12, rax          
+	mov r13, r12
 
 .copy_loop:
-    movb al, byte ptr [r14]        
-    movb byte ptr [r12], al        
-    inc r14               
-    inc r12               
-    test al, al           
-    jnz .copy_loop        
+	movb al, byte ptr [r14]        
+	movb byte ptr [r12], al        
+	inc r14               
+	inc r12               
+	test al, al           
+	jnz .copy_loop        
 
-    mov rax, r13          
-    ret
+	mov rax, r13          
+	ret
+
+.local copy_file
+
+.global write_file_mmap
+write_file_mmap:
+	mov rax, 257
+	mov rsi, rdi
+	mov rdi, -100 # dirfd = AT_FDCWD
+	mov rdx, 0x42 # flags = O_RDWR (0x2) | O_CREAT (0x40) = 0x42
+	mov r10, 0644
+	syscall
+	cmp rax, 0
+	jl exit
+	
+	mov r12, rax # store fd
+
+	mov rax, 8
+	mov rdi, r12
+	mov rsi, 0 
+	mov rdx, 2 # SEEK_END = 2
+	syscall
+
+	mov r13, rax # store length
+
+	mov rax, 8 # reset offset
+	mov rdi, r12
+	mov rsi, 0 
+	mov rdx, 0 
+	syscall
+
+	mov rax, 9            
+	mov rdi, 0         
+	mov rsi, r13         
+	mov rdx, 3            
+	mov r10, 0x1      
+	mov r8, r12            
+	xor r9, r9            
+	syscall
+	
+	cmp rax, -4095        
+	jae exit   
+
+	mov r13, rax
+
+	ret
+
+

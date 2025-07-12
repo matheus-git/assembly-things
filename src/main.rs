@@ -7,6 +7,7 @@ unsafe extern "C" {
     fn file_size(filename: *const i8) -> i64;
     fn shell();
     fn write_mmap(text: *const u8) -> *const u8;
+    fn write_file_mmap(filename: *const i8) -> *const u8;
 }
 
 fn main() {
@@ -18,6 +19,7 @@ fn main() {
             println!("3) Get file size");
             println!("4) Exec Shell");
             println!("5) Write on memory");
+            println!("6) Map file to memory and edit");
             println!("0) Exit");
             print!("Choose an option: ");
             io::stdout().flush().unwrap();
@@ -69,8 +71,35 @@ fn main() {
                     let cstr = CStr::from_ptr(addr as *const i8);
                     println!("Address: {:?}", addr);
                     println!("Written text: {}", cstr.to_str().unwrap());
+                }
+                "6" => {
+                    println!("Enter filename:");
+                    let mut filename_input = String::new();
+                    io::stdin().read_line(&mut filename_input).unwrap();
+                    let filename_trimmed = filename_input.trim_end();
+                    let filename_cstring = CString::new(filename_trimmed).expect("CString::new failed");
+                    let file_ptr = write_file_mmap(filename_cstring.as_ptr());
+                    let size = file_size(filename_cstring.as_ptr()) as usize;
+                    let mmap_slice = std::slice::from_raw_parts_mut(file_ptr as *mut u8, size);
+                    
+                    println!("Enter the string to replace:");
+                    let mut from_input = String::new();
+                    io::stdin().read_line(&mut from_input).unwrap();
+                    let from = from_input.trim_end().as_bytes();
 
-                    break;
+                    println!("Enter the new string:");
+                    let mut to_input = String::new();
+                    io::stdin().read_line(&mut to_input).unwrap();
+                    let to = to_input.trim_end().as_bytes();
+
+                    for i in 0..=size - from.len() {
+                        if &mmap_slice[i..i + from.len()] == from {
+                            mmap_slice[i..i + to.len()].copy_from_slice(to);
+                        }
+                    }
+                    let cstr = CStr::from_ptr(file_ptr as *const i8);
+                    println!("Address: {:?}", file_ptr);
+                    println!("File: \n{}", cstr.to_str().unwrap());
                 }
                 "0" => break,
                 _ => println!("Invalid option"),
