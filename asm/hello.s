@@ -166,4 +166,13 @@ pid:
 
 	ret
 
+.global exec_program
+exec_program:
+	mov rax, 59         
+	mov rdi, rdi        
+	mov rsi, rsi        
+	mov rdx, rdx        
+	syscall
+
+	ret
 
