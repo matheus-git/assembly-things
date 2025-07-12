@@ -19,3 +19,6 @@ println!("0) Exit");
 print!("Choose an option: ");
 ...
 ```
+## 📝 License
+
+This project is open-source under the MIT License.
