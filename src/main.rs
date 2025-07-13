@@ -13,6 +13,7 @@ unsafe extern "C" {
     fn exec_program(path: *const i8, argv: *const *const i8, envp: *const *const i8) -> isize;
     fn pipe();
     fn dup();
+    fn tcp_server();
 }
 
 fn main() {
@@ -28,6 +29,7 @@ fn main() {
         println!("8) Execute 'ls' in child process");
         println!("9) Hello from pipe");
         println!("10) Duplicate stdout and write hello");
+        println!("11) Tcp server :4444");
         println!("0) Exit");
         print!("Choose an option: ");
         io::stdout().flush().unwrap();
@@ -137,6 +139,9 @@ fn main() {
             }
             "10" => {
                 dup();
+            }
+            "11" => {
+                tcp_server();
             }
             _ => {},
         }

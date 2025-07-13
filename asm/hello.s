@@ -1,16 +1,28 @@
 .intel_syntax noprefix
 .section .rodata
 msg:
-    .asciz "Hello, world!\n"
+    	.asciz "Hello, world!\n"
 len = . - msg
+fail_msg: 
+	.asciz "Falhou\n"
+fail_len = . - fail_msg
 filename:
 	.ascii "Cargo.toml\0"
+sockaddr_in:
+    .word 2              
+    .word 0x5c11        
+    .long 0x0100007f   
+    .space 8          
 
 .section .bss
 buffer:
     	.space 400   
 pipefd:
 	.skip 8             
+socketfd:
+	.skip 4
+clientfd:
+	.skip 4
 
 .section .text
 
@@ -79,6 +91,18 @@ done:
 exit:
 	mov rax, 60
 	xor rdi, rdi
+	syscall
+
+.local fail
+fail:
+	mov eax, 1 
+	mov edi, 1 
+	lea rsi, [rip + fail_msg]
+	mov edx, fail_len
+	syscall
+
+	mov eax, 60
+	mov edi, 1 
 	syscall
 
 .global write_mmap
@@ -232,3 +256,52 @@ dup:
 
 	ret
 
+.global tcp_server
+tcp_server:
+	mov eax, 41
+	mov edi, 2          
+	mov esi, 1          
+	xor edx, edx        
+	syscall
+	mov [rip + socketfd], eax
+	
+	mov eax, 49
+	mov edi, [rip + socketfd]
+	lea rsi, [rip + sockaddr_in]
+	mov edx, 16
+	syscall
+	cmp rax, 0
+	js fail
+	
+	mov eax, 50
+	mov edi, [rip + socketfd]
+	mov esi, 5
+	syscall
+	cmp rax, 0
+	js fail
+
+	mov eax, 43
+	mov edi, [rip + socketfd]
+	xor rsi, rsi
+	xor rdx, rdx
+	syscall
+	cmp rax, 0
+	js fail
+	mov [rip + clientfd], eax
+
+	mov eax, 1
+	mov edi, [rip + clientfd]
+	lea rsi, [rip + msg]
+	mov edx, len
+	syscall
+	cmp rax, 0
+	js fail
+
+	mov eax, 3
+	mov edi, [rip + socketfd]
+	syscall
+
+	mov eax, 3
+	mov edi, [rip + clientfd]
+	syscall
+	ret
