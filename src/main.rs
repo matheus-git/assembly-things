@@ -147,15 +147,23 @@ fn main() {
                 dup();
             }
             "11" => {
+                println!("Starting TCP server on 127.0.0.1:4444...");
+                println!("In another terminal, run a command like: nc 127.0.0.1 4444");
+                println!("You should receive a 'Hello, world!' message.");
                 tcp_server();
             }
             "12" => {
+                println!("Starting bind shell on 127.0.0.1:4444...");
+                println!("In another terminal, run a command like: nc 127.0.0.1 4444");
+                println!("You will get a shell session.");
                 bind_shell();
             }
             "13" => {
+                println!("Starting FIFO reader... Make sure to run write_fifo (option 14) in another terminal.");
                 read_fifo();
             }
             "14" => {
+                println!("Writing to FIFO... Make sure the FIFO reader (option 13) is running in another terminal.");
                 write_fifo();
             }
             _ => {},
