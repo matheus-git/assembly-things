@@ -4,7 +4,7 @@ msg:
     	.asciz "Hello, world!\n"
 len = . - msg
 fail_msg: 
-	.asciz "Falhou\n"
+	.asciz "Failed\n"
 fail_len = . - fail_msg
 filename:
 	.ascii "Cargo.toml\0"

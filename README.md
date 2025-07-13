@@ -4,6 +4,8 @@
 
 A study and showcase project focused on practicing Linux syscalls on the x86_64 architecture. It combines assembly language with Rust to demonstrate how to integrate low-level syscalls with high-level programming. 
 
+**Implemented Syscalls**: write, read, exit, execve, openat, close, lseek, mmap, fork, getpid, pipe, dup, dup2, socket, setsockopt, bind, listen, accept, mknod
+
 ```rust
 ...
 println!("Menu:");
