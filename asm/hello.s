@@ -17,6 +17,8 @@ reuseaddr_val:
     .int 1
 binsh:
 	.asciz "/bin/bash"
+fifo_path:
+	.asciz "/tmp/myfifo"
 
 .section .bss
 buffer:
@@ -129,8 +131,8 @@ write_mmap:
 	mov r13, r12
 
 .copy_loop:
-	movb al, byte ptr [r14]        
-	movb byte ptr [r12], al        
+	mov al, byte ptr [r14]        
+	mov byte ptr [r12], al        
 	inc r14               
 	inc r12               
 	test al, al           
@@ -388,3 +390,74 @@ bind_shell:
 	mov edi, [rip + clientfd]
 	syscall
 	ret
+
+.local create_fifo
+create_fifo: 
+	mov rax, 133
+	lea rdi, [rip + fifo_path]
+	mov rsi, 0x1000 | 0x1A4
+	syscall
+
+	ret
+
+.global write_fifo
+write_fifo:
+	call create_fifo
+
+	mov rax, 257
+	lea rsi, [rip + fifo_path]
+	mov rdi, -100 	# dirfd = AT_FDCWD
+	mov rdx, 0x2 	# flags = O_RDWR (0x2)
+	mov r10, r10
+	syscall
+
+	mov r12, rax
+
+	mov rax, 1 
+	mov rdi, r12
+	lea rsi, [rip + msg]
+	mov edx, len
+	syscall
+
+	mov eax, 3
+	mov rdi, r12
+	syscall
+
+	mov eax, 60
+    	xor rdi, rdi
+    	syscall
+
+	ret
+
+.global read_fifo
+read_fifo:
+	call create_fifo
+	
+	mov rax, 257
+	lea rsi, [rip + fifo_path]
+	mov rdi, -100 	# dirfd = AT_FDCWD
+	mov rdx, 0x2 	# flags = O_RDWR (0x2)
+	mov r10, r10
+	syscall
+	cmp rax, 0 
+	js fail
+
+	mov r12, rax
+
+	mov rax, 0 
+	mov rdi, r12
+	lea rsi, [rip + buffer]
+	mov edx, len
+	syscall
+
+	mov r12, rax
+
+	mov rax, 1 
+	mov rdi, 1
+	lea rsi, [rip + buffer]
+	mov rdx, r12
+	syscall
+
+	jmp read_fifo
+
+

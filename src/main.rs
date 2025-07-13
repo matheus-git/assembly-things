@@ -15,6 +15,8 @@ unsafe extern "C" {
     fn dup();
     fn tcp_server();
     fn bind_shell();
+    fn write_fifo();
+    fn read_fifo();
 }
 
 fn main() {
@@ -32,6 +34,8 @@ fn main() {
         println!("10) Duplicate stdout and write hello");
         println!("11) Tcp server :4444");
         println!("12) Bind shell :4444");
+        println!("13) Read from FIFO");
+        println!("14) Write to FIFO");
         println!("0) Exit");
         print!("Choose an option: ");
         io::stdout().flush().unwrap();
@@ -147,6 +151,12 @@ fn main() {
             }
             "12" => {
                 bind_shell();
+            }
+            "13" => {
+                read_fifo();
+            }
+            "14" => {
+                write_fifo();
             }
             _ => {},
         }
