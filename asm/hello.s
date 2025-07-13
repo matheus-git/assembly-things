@@ -191,7 +191,7 @@ pipe:
 	mov rax, 1 
 	mov edi, dword [rip + pipefd + 4]
 	lea rsi, [rip + msg]
-	mov rdx, len
+	mov edx, len
 	syscall
 	cmp rax, 0
 	js exit
@@ -199,7 +199,7 @@ pipe:
 	mov rax, 0 
 	mov edi, dword [rip + pipefd]
 	lea rsi, [rip + buffer]
-	mov rdx, 400
+	mov edx, 400
 	syscall
 
 	mov rdx, rax
@@ -217,3 +217,18 @@ pipe:
 	syscall
 
 	ret
+
+.global dup
+dup:
+	mov eax, 32
+	mov rdi, 1 
+	syscall
+
+	mov edi, eax
+	lea rsi, [rip + msg]
+	mov edx, len
+	mov eax, 1
+	syscall
+
+	ret
+

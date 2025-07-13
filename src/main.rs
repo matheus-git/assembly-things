@@ -12,6 +12,7 @@ unsafe extern "C" {
     fn pid() -> usize;
     fn exec_program(path: *const i8, argv: *const *const i8, envp: *const *const i8) -> isize;
     fn pipe();
+    fn dup();
 }
 
 fn main() {
@@ -25,7 +26,8 @@ fn main() {
         println!("6) Map file to memory and edit");
         println!("7) Fork current process");
         println!("8) Execute 'ls' in child process");
-        println!("9) Pipe");
+        println!("9) Hello from pipe");
+        println!("10) Duplicate stdout and write hello");
         println!("0) Exit");
         print!("Choose an option: ");
         io::stdout().flush().unwrap();
@@ -132,6 +134,9 @@ fn main() {
             }
             "9" => {
                 pipe();
+            }
+            "10" => {
+                dup();
             }
             _ => {},
         }
