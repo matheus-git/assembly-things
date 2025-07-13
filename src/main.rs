@@ -11,6 +11,7 @@ unsafe extern "C" {
     fn fork() -> usize;
     fn pid() -> usize;
     fn exec_program(path: *const i8, argv: *const *const i8, envp: *const *const i8) -> isize;
+    fn pipe();
 }
 
 fn main() {
@@ -24,6 +25,7 @@ fn main() {
         println!("6) Map file to memory and edit");
         println!("7) Fork current process");
         println!("8) Execute 'ls' in child process");
+        println!("9) Pipe");
         println!("0) Exit");
         print!("Choose an option: ");
         io::stdout().flush().unwrap();
@@ -85,7 +87,8 @@ fn main() {
                 let file_ptr = write_file_mmap(filename_cstring.as_ptr());
                 let size = file_size(filename_cstring.as_ptr()) as usize;
                 let mmap_slice = std::slice::from_raw_parts_mut(file_ptr as *mut u8, size);
-                
+                let cstr = CStr::from_ptr(file_ptr as *const i8);
+                println!("File: \n{}", cstr.to_str().unwrap());
                 println!("Enter the string to replace:");
                 let mut from_input = String::new();
                 io::stdin().read_line(&mut from_input).unwrap();
@@ -101,8 +104,7 @@ fn main() {
                         mmap_slice[i..i + to.len()].copy_from_slice(to);
                     }
                 }
-                let cstr = CStr::from_ptr(file_ptr as *const i8);
-                println!("Address: {:?}", file_ptr);
+                println!("\nAddress: {:?}", file_ptr);
                 println!("File: \n{}", cstr.to_str().unwrap());
             }
             "7" => {
@@ -127,6 +129,9 @@ fn main() {
                     let envp = [std::ptr::null::<i8>()];
                     exec_program(path.as_ptr(), argv.as_ptr(), envp.as_ptr());
                 }
+            }
+            "9" => {
+                pipe();
             }
             _ => {},
         }

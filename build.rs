@@ -8,7 +8,7 @@ fn main() {
         Command::new("gcc")
             .args(["-c", "-fPIC", source, "-o", &output])
             .status()
-            .expect("faslet to essemblesfile");
+            .expect("fssssssssssssemblesfile");
         println!("cargo:rustc-link-arg={}", output);
     }
 }

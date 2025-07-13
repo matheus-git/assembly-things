@@ -1,14 +1,16 @@
 .intel_syntax noprefix
 .section .rodata
 msg:
-    .ascii "Hello, world!\n"
+    .asciz "Hello, world!\n"
 len = . - msg
 filename:
 	.ascii "Cargo.toml\0"
 
 .section .bss
 buffer:
-    .space 400   
+    	.space 400   
+pipefd:
+	.skip 8             
 
 .section .text
 
@@ -75,7 +77,9 @@ done:
 
 .local exit
 exit:
-	ret
+	mov rax, 60
+	xor rdi, rdi
+	syscall
 
 .global write_mmap
 write_mmap:
@@ -176,3 +180,40 @@ exec_program:
 
 	ret
 
+.global pipe 
+pipe:
+	mov rax, 22
+	lea rdi, [rip + pipefd]
+	syscall
+	cmp rax, 0
+	js exit
+
+	mov rax, 1 
+	mov edi, dword [rip + pipefd + 4]
+	lea rsi, [rip + msg]
+	mov rdx, len
+	syscall
+	cmp rax, 0
+	js exit
+
+	mov rax, 0 
+	mov edi, dword [rip + pipefd]
+	lea rsi, [rip + buffer]
+	mov rdx, 400
+	syscall
+
+	mov rdx, rax
+	mov rax, 1 
+	mov rdi, 1 
+	lea rsi, [rip + buffer]
+	syscall
+
+	mov rax, 3
+	mov edi, dword [rip + pipefd]
+	syscall
+
+	mov rax, 3 
+	mov edi, dword [rip + pipefd + 4]
+	syscall
+
+	ret
