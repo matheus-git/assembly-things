@@ -14,6 +14,7 @@ unsafe extern "C" {
     fn pipe();
     fn dup();
     fn tcp_server();
+    fn bind_shell();
 }
 
 fn main() {
@@ -30,6 +31,7 @@ fn main() {
         println!("9) Hello from pipe");
         println!("10) Duplicate stdout and write hello");
         println!("11) Tcp server :4444");
+        println!("12) Bind shell :4444");
         println!("0) Exit");
         print!("Choose an option: ");
         io::stdout().flush().unwrap();
@@ -142,6 +144,9 @@ fn main() {
             }
             "11" => {
                 tcp_server();
+            }
+            "12" => {
+                bind_shell();
             }
             _ => {},
         }

