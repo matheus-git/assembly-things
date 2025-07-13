@@ -13,6 +13,8 @@ sockaddr_in:
     .word 0x5c11        
     .long 0x0100007f   
     .space 8          
+reuseaddr_val:
+    .int 1
 
 .section .bss
 buffer:
@@ -264,6 +266,14 @@ tcp_server:
 	xor edx, edx        
 	syscall
 	mov [rip + socketfd], eax
+
+	mov eax, 54
+	mov edi, [rip + socketfd]
+	mov esi, 1 
+	mov edx, 2 
+	lea r10, [rip + reuseaddr_val]
+	mov r8, 4 
+	syscall
 	
 	mov eax, 49
 	mov edi, [rip + socketfd]
