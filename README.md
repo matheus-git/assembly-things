@@ -15,6 +15,12 @@ println!("5) Write on memory");
 println!("6) Map file to memory and edit");
 println!("7) Fork current process");
 println!("8) Execute 'ls' in child process");
+println!("9) Hello from pipe");
+println!("10) Duplicate stdout and write hello");
+println!("11) Tcp server :4444");
+println!("12) Bind shell :4444");
+println!("13) Read from FIFO");
+println!("14) Write to FIFO");
 println!("0) Exit");
 print!("Choose an option: ");
 ...
