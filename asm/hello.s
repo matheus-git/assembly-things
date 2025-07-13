@@ -34,12 +34,13 @@ clientfd:
 
 .global hello 
 hello:
-	mov rdi, 1
+	mov rdi, 1		# write
     	lea rsi, [rip + msg] 
     	mov rdx, len
 	mov rax, 1
 	syscall
-    	ret
+    	
+	jmp exit
 
 .global sum
 sum:
@@ -49,65 +50,56 @@ sum:
 
 .global shell
 shell:
-	xor rax, rax
-	mov rdi, rax
-	push rax
-	movabs rbx, 0x68732f6e69622f
-	push rbx
-	mov rdi, rsp
+	mov rax, 59		# execve
+	lea rdi, [rip + binsh]
 	xor rsi, rsi
 	xor rdx, rdx
-	mov rax, 59
 	syscall
 	ret
 
 .global file_size
 file_size:
-	mov rax, 257        
+	mov rax, 257		# openat
 	mov r10, 0          
 	mov rdx, 0          
 	mov rsi, rdi        
 	mov rdi, -100       
 	syscall
 	cmp rax, 0
-	jl exit
-	mov r9, rax
-    	xor r8, r8
-	jmp read
-read:
-	mov rdi, r9
-	mov rax, 0
-	mov rdx, 100
-	lea rsi, [rip + buffer]
+	jl fail
+
+	mov r12, rax
+
+	mov rax, 8		# lseek  
+	mov rdi, r12            
+	xor rsi, rsi           
+	mov rdx, 2            
 	syscall
-	cmp rax, 0
-	je done
-	js exit
-	add r8, rax
-	jmp read
-done: 
-	mov rdi, r9
-    	mov rax, 3
-    	syscall
-	
-	mov rax, r8
+
+	mov r13, rax
+
+	mov rax, 3		# close
+	mov rdi, r12
+	syscall
+
+	mov rax, r13
 	ret
 
 .local exit
 exit:
-	mov rax, 60
+	mov rax, 60		# exit
 	xor rdi, rdi
 	syscall
 
 .local fail
 fail:
-	mov eax, 1 
+	mov eax, 1		# write 
 	mov edi, 1 
 	lea rsi, [rip + fail_msg]
 	mov edx, fail_len
 	syscall
 
-	mov eax, 60
+	mov eax, 60		# exit
 	mov edi, 1 
 	syscall
 
@@ -115,7 +107,7 @@ fail:
 write_mmap:
 	mov r14, rdi
 
-	mov rax, 9            
+	mov rax, 9		# mmap            
 	mov rdi, 0         
 	mov rsi, 4096         
 	mov rdx, 3            
@@ -141,36 +133,34 @@ write_mmap:
 	mov rax, r13          
 	ret
 
-.local copy_file
-
 .global write_file_mmap
 write_file_mmap:
-	mov rax, 257
+	mov rax, 257		# openat
 	mov rsi, rdi
-	mov rdi, -100 # dirfd = AT_FDCWD
-	mov rdx, 0x42 # flags = O_RDWR (0x2) | O_CREAT (0x40) = 0x42
+	mov rdi, -100 		# dirfd = AT_FDCWD
+	mov rdx, 0x42 		# flags = O_RDWR (0x2) | O_CREAT (0x40) = 0x42
 	mov r10, 0644
 	syscall
 	cmp rax, 0
 	jl exit
 	
-	mov r12, rax # store fd
+	mov r12, rax
 
-	mov rax, 8
+	mov rax, 8		# lseek
 	mov rdi, r12
 	mov rsi, 0 
-	mov rdx, 2 # SEEK_END = 2
+	mov rdx, 2
 	syscall
 
-	mov r13, rax # store length
+	mov r13, rax 
 
-	mov rax, 8 # reset offset
+	mov rax, 8		# lseek 
 	mov rdi, r12
 	mov rsi, 0 
 	mov rdx, 0 
 	syscall
 
-	mov rax, 9            
+	mov rax, 9        	# mmap    
 	mov rdi, 0         
 	mov rsi, r13         
 	mov rdx, 3            
@@ -180,29 +170,27 @@ write_file_mmap:
 	syscall
 	
 	cmp rax, -4095        
-	jae exit   
-
-	mov r13, rax
+	jae fail   
 
 	ret
 
 .global fork
 fork:
-	mov rax, 57
+	mov rax, 57		# fork
 	syscall
 
 	ret
 
 .global pid
 pid:
-	mov rax, 39
+	mov rax, 39		# getpid
 	syscall
 
 	ret
 
 .global exec_program
 exec_program:
-	mov rax, 59         
+	mov rax, 59		# execve        
 	mov rdi, rdi        
 	mov rsi, rsi        
 	mov rdx, rdx        
@@ -212,13 +200,13 @@ exec_program:
 
 .global pipe 
 pipe:
-	mov rax, 22
+	mov rax, 22		# pipe
 	lea rdi, [rip + pipefd]
 	syscall
 	cmp rax, 0
 	js exit
 
-	mov rax, 1 
+	mov rax, 1 		# write
 	mov edi, dword [rip + pipefd + 4]
 	lea rsi, [rip + msg]
 	mov edx, len
@@ -226,14 +214,14 @@ pipe:
 	cmp rax, 0
 	js exit
 
-	mov rax, 0 
+	mov rax, 0 		# read
 	mov edi, dword [rip + pipefd]
 	lea rsi, [rip + buffer]
 	mov edx, 400
 	syscall
 
 	mov rdx, rax
-	mov rax, 1 
+	mov rax, 1 		# write
 	mov rdi, 1 
 	lea rsi, [rip + buffer]
 	syscall
@@ -250,28 +238,28 @@ pipe:
 
 .global dup
 dup:
-	mov eax, 32
+	mov eax, 32		# dup
 	mov rdi, 1 
 	syscall
 
 	mov edi, eax
 	lea rsi, [rip + msg]
 	mov edx, len
-	mov eax, 1
+	mov eax, 1		# write
 	syscall
 
 	ret
 
 .global tcp_server
 tcp_server:
-	mov eax, 41
+	mov eax, 41		# socket
 	mov edi, 2          
 	mov esi, 1          
 	xor edx, edx        
 	syscall
 	mov [rip + socketfd], eax
 
-	mov eax, 54
+	mov eax, 54		# setsockopt
 	mov edi, [rip + socketfd]
 	mov esi, 1 
 	mov edx, 2 
@@ -279,7 +267,7 @@ tcp_server:
 	mov r8, 4 
 	syscall
 	
-	mov eax, 49
+	mov eax, 49		# bind
 	mov edi, [rip + socketfd]
 	lea rsi, [rip + sockaddr_in]
 	mov edx, 16
@@ -287,14 +275,14 @@ tcp_server:
 	cmp rax, 0
 	js fail
 	
-	mov eax, 50
+	mov eax, 50		# listen
 	mov edi, [rip + socketfd]
 	mov esi, 5
 	syscall
 	cmp rax, 0
 	js fail
 
-	mov eax, 43
+	mov eax, 43		# accept
 	mov edi, [rip + socketfd]
 	xor rsi, rsi
 	xor rdx, rdx
@@ -303,7 +291,7 @@ tcp_server:
 	js fail
 	mov [rip + clientfd], eax
 
-	mov eax, 1
+	mov eax, 1		# write
 	mov edi, [rip + clientfd]
 	lea rsi, [rip + msg]
 	mov edx, len
@@ -311,25 +299,25 @@ tcp_server:
 	cmp rax, 0
 	js fail
 
-	mov eax, 3
+	mov eax, 3		# close
 	mov edi, [rip + socketfd]
 	syscall
 
-	mov eax, 3
+	mov eax, 3		# close
 	mov edi, [rip + clientfd]
 	syscall
 	ret
 
 .global bind_shell
 bind_shell:
-	mov eax, 41
+	mov eax, 41		# socket
 	mov edi, 2          
 	mov esi, 1          
 	xor edx, edx        
 	syscall
 	mov [rip + socketfd], eax
 
-	mov eax, 54
+	mov eax, 54		# setsockopt
 	mov edi, [rip + socketfd]
 	mov esi, 1 
 	mov edx, 2 
@@ -337,7 +325,7 @@ bind_shell:
 	mov r8, 4 
 	syscall
 	
-	mov eax, 49
+	mov eax, 49		# bind
 	mov edi, [rip + socketfd]
 	lea rsi, [rip + sockaddr_in]
 	mov edx, 16
@@ -345,14 +333,14 @@ bind_shell:
 	cmp rax, 0
 	js fail
 	
-	mov eax, 50
+	mov eax, 50		# listen
 	mov edi, [rip + socketfd]
 	mov esi, 5
 	syscall
 	cmp rax, 0
 	js fail
 
-	mov eax, 43
+	mov eax, 43		# accept
 	mov edi, [rip + socketfd]
 	xor rsi, rsi
 	xor rdx, rdx
@@ -361,21 +349,21 @@ bind_shell:
 	js fail
 	mov [rip + clientfd], eax
 
-	mov eax, 3
+	mov eax, 3		# close
 	mov edi, [rip + socketfd]
 	syscall
 	
-	mov eax, 33
+	mov eax, 33		# dup2
 	mov edi, [rip + clientfd]
 	xor esi, esi       
 	syscall
 
-	mov eax, 33
+	mov eax, 33		# dup2
 	mov edi, [rip + clientfd]
 	mov esi, 1
 	syscall
 
-	mov eax, 33
+	mov eax, 33		# dup2
 	mov edi, [rip + clientfd]
 	mov esi, 2
 	syscall
@@ -383,17 +371,17 @@ bind_shell:
 	lea rdi, [rip + binsh]
 	xor rsi, rsi
 	xor rdx, rdx
-	mov eax, 59
+	mov eax, 59		# execve
 	syscall
 
-	mov eax, 3
+	mov eax, 3		# close
 	mov edi, [rip + clientfd]
 	syscall
 	ret
 
 .local create_fifo
 create_fifo: 
-	mov rax, 133
+	mov rax, 133		# mknod
 	lea rdi, [rip + fifo_path]
 	mov rsi, 0x1000 | 0x1A4
 	syscall
@@ -404,7 +392,7 @@ create_fifo:
 write_fifo:
 	call create_fifo
 
-	mov rax, 257
+	mov rax, 257		# openat
 	lea rsi, [rip + fifo_path]
 	mov rdi, -100 	# dirfd = AT_FDCWD
 	mov rdx, 0x2 	# flags = O_RDWR (0x2)
@@ -413,19 +401,17 @@ write_fifo:
 
 	mov r12, rax
 
-	mov rax, 1 
+	mov rax, 1 		# write
 	mov rdi, r12
 	lea rsi, [rip + msg]
 	mov edx, len
 	syscall
 
-	mov eax, 3
+	mov eax, 3		# close
 	mov rdi, r12
 	syscall
 
-	mov eax, 60
-    	xor rdi, rdi
-    	syscall
+	jmp exit
 
 	ret
 
@@ -433,7 +419,7 @@ write_fifo:
 read_fifo:
 	call create_fifo
 	
-	mov rax, 257
+	mov rax, 257		# openat
 	lea rsi, [rip + fifo_path]
 	mov rdi, -100 	# dirfd = AT_FDCWD
 	mov rdx, 0x2 	# flags = O_RDWR (0x2)
@@ -444,7 +430,7 @@ read_fifo:
 
 	mov r12, rax
 
-	mov rax, 0 
+	mov rax, 0 		# read
 	mov rdi, r12
 	lea rsi, [rip + buffer]
 	mov edx, len
@@ -452,7 +438,7 @@ read_fifo:
 
 	mov r12, rax
 
-	mov rax, 1 
+	mov rax, 1 		# write
 	mov rdi, 1
 	lea rsi, [rip + buffer]
 	mov rdx, r12
